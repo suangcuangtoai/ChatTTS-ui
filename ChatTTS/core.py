@@ -47,12 +47,12 @@ class Chat:
         if source == 'huggingface':
             hf_home = os.getenv('HF_HOME', os.path.expanduser("~/.cache/huggingface"))
             try:
-                download_path = get_latest_modified_file(os.path.join(hf_home, 'hub/models--2Noise--ChatTTS/snapshots'))
+                download_path = get_latest_modified_files(os.path.join(hf_home, 'hub/models--2Noise--ChatTTS/snapshots'))
             except:
                 download_path = None
             if download_path is None or force_redownload: 
                 self.logger.log(logging.INFO, f'Download from HF: https://huggingface.co/2Noise/ChatTTS')
-                download_path = snapshot_download(repo_id="2Noise/ChatTTS", allow_patterns=["*.pt", "*.yaml"])
+                download_path = snapshot_downloads(repo_id="2Noise/ChatTTS", allow_patterns=["*.pt", "*.yaml"])
             else:
                 self.logger.log(logging.INFO, f'Load from cache: {download_path}')
         elif source == 'local':
@@ -76,7 +76,7 @@ class Chat:
         compile: bool = True,
     ):
         if not device:
-            device = select_device(4096)
+            device = select_devices(4096)
             self.logger.log(logging.INFO, f'use {device}')
             
         if vocos_config_path:
@@ -177,7 +177,7 @@ class Chat:
     def sample_random_speaker(self, ):
         
         dim = self.pretrain_models['gpt'].gpt.layers[0].mlp.gate_proj.in_features
-        std, mean = self.pretrain_models['spk_stat'].chunk(2)
+        std, mean = self.pretrain_models['spk_stats'].chunk(2)
         return torch.randn(dim, device=std.device) * std + mean
     
     def init_normalizer(self, lang):
