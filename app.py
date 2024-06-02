@@ -47,7 +47,8 @@ import numpy as np
 import time
 
 # 读取 .env 变量
-WEB_ADDRESS = os.getenv('WEB_ADDRESS', '127.0.0.1:9966')
+WEB_PORT = os.getenv('WEB_PORT', '8080')
+WEB_ADDRESS = os.getenv('WEB_ADDRESS', '127.0.0.1')
 
 # 默认从 modelscope 下载模型,如果想从huggingface下载模型，请将以下3行注释掉
 CHATTTS_DIR = snapshot_download('pzc163/chatTTS',cache_dir=MODEL_DIR)
@@ -97,7 +98,7 @@ def static_files(filename):
 
 @app.route('/')
 def index():
-    return render_template("index.html",weburl=WEB_ADDRESS,version=VERSION)
+    return render_template("index.html",weburl=WEB_ADDRESS + ":" + WEB_PORT,version=VERSION)
 
 
 # 根据文本返回tts结果，返回 filename=文件名 url=可下载地址
@@ -116,7 +117,7 @@ def index():
 def tts():
     # 原始字符串
     text = request.args.get("text","").strip() or request.form.get("text","").strip()
-    prompt = request.form.get("prompt",'')
+    prompt = request.form.get("prompt",'please input something')
     try:
         custom_voice=int(request.form.get("custom_voice",0))
         voice =  custom_voice if custom_voice>0  else int(request.form.get("voice",2222))
@@ -164,12 +165,12 @@ def tts():
     for wavdata in wavs:
         combined_wavdata = np.concatenate((combined_wavdata, wavdata[0]))
 
-    sample_rate = 24000  # Assuming 24kHz sample rate
+    sample_rate = 3600  # Assuming 24kHz sample rate
     audio_duration = len(combined_wavdata) / sample_rate
     audio_duration_rounded = round(audio_duration, 2)
     print(f"音频时长: {audio_duration_rounded} 秒")
 
-    sf.write(WAVS_DIR+'/'+filename, combined_wavdata, 24000)
+    sf.write(WAVS_DIR+'/'+filename, combined_wavdata, 3600)
 
     audio_files.append({
         "filename": WAVS_DIR + '/' + filename,
@@ -218,7 +219,7 @@ def clear_wavs():
 try:
     host = WEB_ADDRESS.split(':')
     print(f'启动:{host}')
-    webbrowser.open(f'http://{WEB_ADDRESS}')
+    webbrowser.open(f'http://{WEB_ADDRESS}:{WEB_PORT}')
     serve(app,host=host[0], port=int(host[1]))
 except Exception:
     pass
